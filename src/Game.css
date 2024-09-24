@@ -1,0 +1,147 @@
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+  color: #776e65;
+}
+
+.game-header {
+  font-size: 80px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.game-score {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.game-board {
+  background-color: #bbada0;
+  border-radius: 6px;
+  width: 500px;
+  height: 500px;
+  padding: 15px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 15px;
+  padding: 15px;
+}
+
+.game-tile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  border-radius: 3px;
+  height: 100px;
+  width: 100px;
+  font-size: 55px;
+  color: #776e65;
+}
+
+.tile-0 {
+  background-color: #cdc1b4;
+}
+.tile-2 {
+  background-color: #eee4da;
+  color: #776e65;
+  font-size: 55px;
+}
+.tile-4 {
+  background-color: #ede0c8;
+  color: #776e65;
+  font-size: 55px;
+}
+.tile-8 {
+  background-color: #f2b179;
+  color: #f9f6f2;
+  font-size: 55px;
+}
+.tile-16 {
+  background-color: #f59563;
+  color: #f9f6f2;
+  font-size: 55px;
+}
+.tile-32 {
+  background-color: #f67c5f;
+  color: #f9f6f2;
+  font-size: 55px;
+}
+.tile-64 {
+  background-color: #f65e3b;
+  color: #f9f6f2;
+  font-size: 55px;
+}
+.tile-128 {
+  background-color: #edcf72;
+  color: #f9f6f2;
+  font-size: 45px;
+}
+.tile-256 {
+  background-color: #edcc61;
+  color: #f9f6f2;
+  font-size: 45px;
+}
+.tile-512 {
+  background-color: #edc850;
+  color: #f9f6f2;
+  font-size: 45px;
+}
+.tile-1024 {
+  background-color: #edc53f;
+  color: #f9f6f2;
+  font-size: 35px;
+}
+.tile-2048 {
+  background-color: #edc22e;
+  color: #f9f6f2;
+  font-size: 35px;
+}
+
+.new-game-button {
+  background-color: #8f7a66;
+  color: #f9f6f2;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 3px;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.game-over,
+.game-won {
+  font-size: 30px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+.button-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.game-button {
+  background-color: #8f7a66;
+  color: #f9f6f2;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 3px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.game-button:hover {
+  background-color: #9b8b7f;
+}
+
+.game-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
