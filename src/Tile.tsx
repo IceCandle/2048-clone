@@ -7,7 +7,9 @@ interface TileProps {
 }
 
 const Tile: React.FC<TileProps> = ({ value }) => {
-  return <div className={`game-tile tile-${value}`}>{value !== 0 && value}</div>;
+  return (
+    <div className={`game-tile tile-${value}`}>{value !== 0 && value}</div>
+  );
 };
 
 export default Tile;
