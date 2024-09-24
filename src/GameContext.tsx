@@ -116,7 +116,9 @@ const initialState: GameState = {
 
 const loadStateFromLocalStorage = (): GameState => {
   const savedState = localStorage.getItem('gameState');
-  return savedState != null ? (JSON.parse(savedState) as GameState) : initialState;
+  return savedState != null
+    ? (JSON.parse(savedState) as GameState)
+    : initialState;
 };
 
 const GameContext = createContext<
@@ -154,13 +156,13 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       };
     }
     case 'NEW_GAME':
-      return { 
-				board: addRandomTile(addRandomTile(createEmptyBoard())),
-				score: 0,
-				gameOver: false,
-				previousStates: [],
-				hasWon: false,
-			 };
+      return {
+        board: addRandomTile(addRandomTile(createEmptyBoard())),
+        score: 0,
+        gameOver: false,
+        previousStates: [],
+        hasWon: false,
+      };
     case 'UNDO': {
       if (state.previousStates.length === 0) return state;
       if (state.previousStates[0] === undefined) return state;
@@ -175,7 +177,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       };
     }
     case 'LOAD_GAME': {
-			return loadStateFromLocalStorage();
+      return loadStateFromLocalStorage();
     }
     case 'ADD_TILE':
       return { ...state, board: addRandomTile(state.board) };
@@ -189,7 +191,10 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
 };
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(gameReducer, loadStateFromLocalStorage());
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    loadStateFromLocalStorage(),
+  );
   useEffect(() => {
     localStorage.setItem('gameState', JSON.stringify(state));
   }, [state]);
