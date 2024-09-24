@@ -1,3 +1,5 @@
+import './Game.css';
+
 import React from 'react';
 
 interface TileProps {
@@ -5,11 +7,7 @@ interface TileProps {
 }
 
 const Tile: React.FC<TileProps> = ({ value }) => {
-    return (
-      <div className={`tile tile-${value}`}>
-        {value !== 0 && value}
-      </div>
-    );
-  };
+  return <div className={`tile tile-${value}`}>{value !== 0 && value}</div>;
+};
 
 export default Tile;

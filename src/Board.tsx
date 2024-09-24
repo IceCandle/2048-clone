@@ -7,12 +7,12 @@ const Board: React.FC = () => {
   const { state } = useGame();
 
   return (
-    <div className="board">
-      {state.board.map((row, i) =>
-        row.map((value, j) => (
-          <Tile key={`${i}-${j}`} value={value} />
-        ))
-      )}
+    <div className="game-container">
+      <div className="game-board">
+        {state.board.map((row, i) =>
+          row.map((value, j) => <Tile key={`${i}-${j}`} value={value} />),
+        )}
+      </div>
     </div>
   );
 };
