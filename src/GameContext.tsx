@@ -79,14 +79,14 @@ const moveBoard = (
   let newBoard = board.map((row) => [...row]);
 
   if (direction === 'UP') newBoard = rotate(rotate(rotate(newBoard)));
-  if (direction === 'RIGHT') newBoard = rotate(newBoard);
-  if (direction === 'DOWN') newBoard = rotate(rotate(newBoard));
+  if (direction === 'RIGHT') newBoard = rotate(rotate(newBoard));
+  if (direction === 'DOWN') newBoard = rotate(newBoard);
 
   newBoard = moveLeft(newBoard);
 
   if (direction === 'UP') newBoard = rotate(newBoard);
-  if (direction === 'RIGHT') newBoard = rotate(rotate(rotate(newBoard)));
-  if (direction === 'DOWN') newBoard = rotate(rotate(newBoard));
+  if (direction === 'RIGHT') newBoard = rotate(rotate(newBoard));
+  if (direction === 'DOWN') newBoard = rotate(rotate(rotate(newBoard)));
 
   return [newBoard, score];
 };
@@ -112,6 +112,13 @@ const initialState: GameState = {
   gameOver: false,
   previousStates: [],
   hasWon: false,
+};
+
+const loadStateFromLocalStorage = (): GameState => {
+  const savedState = localStorage.getItem('gameState');
+  return savedState != null
+    ? (JSON.parse(savedState) as GameState)
+    : initialState;
 };
 
 const GameContext = createContext<
@@ -149,7 +156,13 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       };
     }
     case 'NEW_GAME':
-      return { ...initialState, hasWon: false };
+      return {
+        board: addRandomTile(addRandomTile(createEmptyBoard())),
+        score: 0,
+        gameOver: false,
+        previousStates: [],
+        hasWon: false,
+      };
     case 'UNDO': {
       if (state.previousStates.length === 0) return state;
       if (state.previousStates[0] === undefined) return state;
@@ -164,10 +177,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       };
     }
     case 'LOAD_GAME': {
-      const savedState = localStorage.getItem('gameState');
-      return savedState != null
-        ? (JSON.parse(savedState) as GameState)
-        : initialState;
+      return loadStateFromLocalStorage();
     }
     case 'ADD_TILE':
       return { ...state, board: addRandomTile(state.board) };
@@ -181,7 +191,10 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
 };
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    loadStateFromLocalStorage(),
+  );
   useEffect(() => {
     localStorage.setItem('gameState', JSON.stringify(state));
   }, [state]);
