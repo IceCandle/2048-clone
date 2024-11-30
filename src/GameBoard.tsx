@@ -1,9 +1,7 @@
-import React from 'react';
-
 import { useGame } from './GameContext';
 import Tile from './Tile';
 
-const Board: React.FC = () => {
+const GameBoard = () => {
   const { state } = useGame();
 
   return (
@@ -17,4 +15,4 @@ const Board: React.FC = () => {
   );
 };
 
-export default Board;
+export default GameBoard;
