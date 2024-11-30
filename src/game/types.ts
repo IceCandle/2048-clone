@@ -9,7 +9,7 @@ export interface GameState {
   hasWon: boolean;
 }
 
-export interface GameHistoryState {
+interface GameHistoryState {
   board: Board;
   score: number;
 }
