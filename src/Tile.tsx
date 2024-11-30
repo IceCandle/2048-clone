@@ -1,12 +1,10 @@
 import './Game.css';
 
-import React from 'react';
-
 interface TileProps {
   value: number;
 }
 
-const Tile: React.FC<TileProps> = ({ value }) => {
+const Tile = ({ value }: TileProps) => {
   return (
     <div className={`game-tile tile-${value}`}>{value !== 0 && value}</div>
   );

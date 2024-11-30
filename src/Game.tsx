@@ -1,39 +1,46 @@
 import './Game.css';
 
-import React, { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
-import Board from './Board';
+import type { Direction } from './game/types';
+import GameBoard from './GameBoard';
 import { useGame } from './GameContext';
 
-const Game: React.FC = () => {
+const Game = () => {
   const { state, dispatch } = useGame();
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.startsWith('Arrow')) {
-        e.preventDefault();
-        dispatch({
-          type: 'MOVE',
-          direction: e.key.replace('Arrow', '').toUpperCase() as
-            | 'UP'
-            | 'DOWN'
-            | 'LEFT'
-            | 'RIGHT',
-        });
-      }
-    };
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (state.gameOver || state.hasWon) return;
 
+      const keyToDirection: Record<string, Direction> = {
+        ArrowUp: 'UP',
+        ArrowDown: 'DOWN',
+        ArrowLeft: 'LEFT',
+        ArrowRight: 'RIGHT',
+      };
+
+      const direction = keyToDirection[e.key];
+      if (direction !== undefined) {
+        e.preventDefault();
+        dispatch({ type: 'MOVE', direction });
+      }
+    },
+    [dispatch, state.gameOver, state.hasWon],
+  );
+
+  useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [dispatch]);
+  }, [handleKeyDown]);
 
   return (
     <div className="game-container">
       <h1 className="game-header">128</h1>
       <div className="game-score">Score: {state.score}</div>
-      <Board />
+      <GameBoard />
       {state.gameOver && <div className="game-over">Game Over!</div>}
       {state.hasWon && <div className="game-won">You Win!</div>}
       <div className="button-container">

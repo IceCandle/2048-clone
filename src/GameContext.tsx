@@ -6,119 +6,85 @@ import React, {
   useReducer,
 } from 'react';
 
+import {
+  addRandomTile,
+  createEmptyBoard,
+  isValidRow,
+  moveBoard,
+} from './game/board';
+import type { Direction, GameState } from './game/types';
+
 interface GameProviderProps {
   children: ReactNode;
 }
 
-type GameState = {
-  board: number[][];
-  score: number;
-  gameOver: boolean;
-  previousStates: {
-    board: number[][];
-    score: number;
-  }[];
-  hasWon: boolean;
-};
-
 type GameAction =
-  | { type: 'MOVE'; direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' }
+  | { type: 'MOVE'; direction: Direction }
   | { type: 'NEW_GAME' }
-  | { type: 'ADD_TILE' }
-  | { type: 'UPDATE_SCORE'; points: number }
-  | { type: 'SET_GAME_OVER' }
-  | { type: 'UNDO' }
-  | { type: 'LOAD_GAME' };
+  | { type: 'UNDO' };
 
-const createEmptyBoard = (): number[][] =>
-  Array.from({ length: 4 }, () => Array<number>(4).fill(0));
+const createInitialBoard = () =>
+  addRandomTile(addRandomTile(createEmptyBoard()));
 
-const addRandomTile = (board: number[][]): number[][] => {
-  const emptyTiles = board
-    .flatMap((row, i) =>
-      row.map((val, j) => (val === 0 ? ([i, j] as [number, number]) : null)),
-    )
-    .filter((val): val is [number, number] => val !== null);
-
-  if (emptyTiles.length === 0) return board;
-
-  const randomIndex = Math.floor(Math.random() * emptyTiles.length);
-  const [randomRow, randomCol] = emptyTiles[randomIndex] ?? [-1, -1];
-  const newValue = Math.random() < 0.9 ? 2 : 4;
-
-  return board.map((row, i) =>
-    row.map((val, j) => (i === randomRow && j === randomCol ? newValue : val)),
-  );
-};
-
-const moveBoard = (
-  board: number[][],
-  direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT',
-): [number[][], number] => {
-  let score = 0;
-
-  const rotate = (b: number[][]): number[][] => {
-    return (b[0]?.map((_, index) => b.map((row) => row[index]).reverse()) ??
-      []) as number[][];
-  };
-
-  const moveLeft = (b: number[][]): number[][] =>
-    b.map((row) => {
-      const filtered = row.filter((tile) => tile !== 0);
-      const merged = filtered.reduce<number[]>((acc, curr) => {
-        if (acc.length > 0 && acc[acc.length - 1] === curr) {
-          score += curr * 2;
-          return [...acc.slice(0, -1), curr * 2];
-        } else {
-          return [...acc, curr];
-        }
-      }, []);
-      return merged.concat(Array(4 - merged.length).fill(0));
-    });
-
-  let newBoard = board.map((row) => [...row]);
-
-  if (direction === 'UP') newBoard = rotate(rotate(rotate(newBoard)));
-  if (direction === 'RIGHT') newBoard = rotate(rotate(newBoard));
-  if (direction === 'DOWN') newBoard = rotate(newBoard);
-
-  newBoard = moveLeft(newBoard);
-
-  if (direction === 'UP') newBoard = rotate(newBoard);
-  if (direction === 'RIGHT') newBoard = rotate(rotate(newBoard));
-  if (direction === 'DOWN') newBoard = rotate(rotate(rotate(newBoard)));
-
-  return [newBoard, score];
-};
-
-const isGameOver = (board: number[][]): boolean => {
-  const hasEmptyTile = board.some((row) => row.includes(0));
-  if (hasEmptyTile) return false;
-
-  const hasMergeableTiles = board.some((row, i) =>
-    row.some(
-      (tile, j) =>
-        (i < 3 && tile === (board[i + 1]?.[j] ?? -1)) ||
-        (j < 3 && tile === (row[j + 1] ?? -1)),
-    ),
-  );
-
-  return !hasMergeableTiles;
-};
-
-const initialState: GameState = {
-  board: addRandomTile(addRandomTile(createEmptyBoard())),
+const DEFAULT_GAME_STATE: GameState = {
+  board: createInitialBoard(),
   score: 0,
   gameOver: false,
   previousStates: [],
   hasWon: false,
 };
 
+const isGameOver = (board: number[][]): boolean => {
+  // Validate board structure
+  if (!Array.isArray(board) || !board.every(isValidRow)) {
+    return false;
+  }
+
+  const hasEmptyCell = board.some(
+    (row) => Array.isArray(row) && row.some((cell) => cell === 0),
+  );
+
+  if (hasEmptyCell) {
+    return false;
+  }
+
+  // Check for possible merges horizontally and vertically
+  for (let i = 0; i < board.length; i++) {
+    const row = board[i];
+    if (row == null) continue;
+
+    for (let j = 0; j < row.length - 1; j++) {
+      const current = row[j];
+      const right = row[j + 1];
+      const below = board[i + 1]?.[j];
+
+      if (current === right || (below != null && current === below)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
 const loadStateFromLocalStorage = (): GameState => {
-  const savedState = localStorage.getItem('gameState');
-  return savedState != null
-    ? (JSON.parse(savedState) as GameState)
-    : initialState;
+  try {
+    const savedState = localStorage.getItem('gameState');
+    if (savedState != null) {
+      const parsedState = JSON.parse(savedState) as GameState;
+      // Validate the loaded state has the correct structure
+      if (
+        Array.isArray(parsedState.board) &&
+        typeof parsedState.score === 'number' &&
+        Array.isArray(parsedState.previousStates)
+      ) {
+        return parsedState;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading game state:', error);
+  }
+  return DEFAULT_GAME_STATE;
 };
 
 const GameContext = createContext<
@@ -129,78 +95,80 @@ const GameContext = createContext<
   | undefined
 >(undefined);
 
+const hasWinningTile = (board: number[][]): boolean =>
+  board.some((row) => row.some((cell) => cell === 128));
+
 const gameReducer = (state: GameState, action: GameAction): GameState => {
-  if (state.hasWon && action.type !== 'NEW_GAME') {
-    return state;
-  }
   switch (action.type) {
     case 'MOVE': {
-      const previousState = { board: state.board, score: state.score };
-      const [newBoard, scoreIncrease] = moveBoard(
-        state.board,
-        action.direction,
-      );
-      const boardChanged =
-        JSON.stringify(newBoard) !== JSON.stringify(state.board);
-      if (!boardChanged) return state;
-      const updatedBoard = addRandomTile(newBoard);
-      const newScore = state.score + scoreIncrease;
-      const gameOver = isGameOver(updatedBoard);
-      const hasWon = newBoard.some((row) => row.includes(128));
+      if (state.gameOver || state.hasWon) {
+        return state;
+      }
+
+      const moveResult = moveBoard(state.board, action.direction);
+
+      // If no tiles merged or moved, return current state
+      if (!moveResult.merged) {
+        return state;
+      }
+
+      const previousState = {
+        board: state.board,
+        score: state.score,
+      };
+
+      const updatedBoard = addRandomTile(moveResult.board);
+
+      const newScore = state.score + moveResult.scoreIncrease;
+      const newHasWon = hasWinningTile(updatedBoard);
+
       return {
         board: updatedBoard,
         score: newScore,
-        gameOver,
+        gameOver: isGameOver(updatedBoard),
         previousStates: [previousState, ...state.previousStates],
-        hasWon: state.hasWon || hasWon,
+        hasWon: newHasWon,
       };
     }
+
     case 'NEW_GAME':
       return {
-        board: addRandomTile(addRandomTile(createEmptyBoard())),
-        score: 0,
-        gameOver: false,
-        previousStates: [],
-        hasWon: false,
+        ...DEFAULT_GAME_STATE,
+        board: createInitialBoard(), // Create a fresh board each time
       };
+
     case 'UNDO': {
-      if (state.previousStates.length === 0) return state;
-      if (state.previousStates[0] === undefined) return state;
-      const previousState = state.previousStates[0];
+      const [previousState, ...remainingStates] = state.previousStates;
+      if (previousState == null) {
+        return state;
+      }
+
       return {
         ...state,
         board: previousState.board,
         score: previousState.score,
-        previousStates: state.previousStates.slice(1),
+        previousStates: remainingStates,
         gameOver: false,
         hasWon: false,
       };
     }
-    case 'LOAD_GAME': {
-      return loadStateFromLocalStorage();
-    }
-    case 'ADD_TILE':
-      return { ...state, board: addRandomTile(state.board) };
-    case 'UPDATE_SCORE':
-      return { ...state, score: state.score + action.points };
-    case 'SET_GAME_OVER':
-      return { ...state, gameOver: true };
+
     default:
       return state;
   }
 };
 
-export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
+export const GameProvider = ({ children }: GameProviderProps) => {
   const [state, dispatch] = useReducer(
     gameReducer,
-    loadStateFromLocalStorage(),
+    null,
+    loadStateFromLocalStorage,
   );
+
   useEffect(() => {
     localStorage.setItem('gameState', JSON.stringify(state));
   }, [state]);
-  useEffect(() => {
-    dispatch({ type: 'LOAD_GAME' });
-  }, []);
+
   return (
     <GameContext.Provider value={{ state, dispatch }}>
       {children}
